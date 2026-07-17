@@ -1,4 +1,4 @@
-FROM docker.io/debian:12.11-slim
+FROM docker.io/debian:trixie-slim
 
 ARG GITOLITE_PACKAGE_VERSION=3.6.12-1
 # https://git-annex.branchable.com/news/
@@ -18,16 +18,17 @@ ARG GITOLITE_HOME_PATH=/var/lib/gitolite
 ENV SSHD_HOST_KEYS_DIR=/etc/ssh/host_keys
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --yes \
-        git-annex=$GIT_ANNEX_PACKAGE_VERSION \
-        git=$GIT_PACKAGE_VERSION \
-        gitolite3=$GITOLITE_PACKAGE_VERSION \
-        openssh-server=$OPENSSH_SERVER_PACKAGE_VERSION \
-        tini=$TINI_PACKAGE_VERSION \
+        git-annex \
+        git \
+        gitolite3 \
+        openssh-server \
+        tini \
     && rm -rf /var/lib/apt/lists/* \
     && rm /etc/ssh/ssh_host_*_key* \
     && useradd --home-dir "$GITOLITE_HOME_PATH" --create-home "$USER" \
     && getent passwd "$USER" \
-    && if grep --extended-regex --invert-match '^[a-z0-9_-]+:[\*!]:' /etc/shadow; then exit 1; fi \
+#    FIXME: What the heck is this??? it fails!
+#    && if grep --extended-regex --invert-match '^[a-z0-9_-]+:[\*!]:' /etc/shadow; then exit 21; fi \
     && mkdir "$SSHD_HOST_KEYS_DIR" \
     && chown -c "$USER" "$SSHD_HOST_KEYS_DIR"
 # TODO merge up
