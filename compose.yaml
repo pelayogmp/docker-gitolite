@@ -1,0 +1,35 @@
+volumes:
+  ssh_host_keys:
+  gitolite_home:
+
+services:
+  sshd:
+    build: .
+    image: docker.io/fphammerle/gitolite
+    container_name: gitolite
+    environment:
+      - GITOLITE_INITIAL_ADMIN_NAME: admin
+      - GITOLITE_USER_PUBLIC_KEY_admin: ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEA0M9mM4PPuBACWRuaFoAtiRsVoxLnKNU9VpTNdjFr8zSp0iOLo19bHPNHiZBNfnNDQ8FOQmNfU1xxoBcEVzq/e1G7n8aVoUqqzq86lquJh0RjRtziK0oliz+0yHM59Gh2qwuxb7hklmVEJChpggmJP687zePoSsp89LQhrzZDxRiB33bRMav2WkR/wGyZPI5SrE3hv+xrPtX/38mQF6p+qg4Guy402fKu5tY1s8CnItJ4UJ+IZghzWnjC8ISKrAqPLZeI3ll2vQ56ZPswXgRL8A4MskdIcE+kXsjxIzef0CNkP/Olmj8ecATyYgJASSLzXFPrA86iVZW3DLFlcmHAPw== rsa-key-20180703 <pelayogmp@gmail.com>
+      # - GITOLITE_USER_PUBLIC_KEY_alice: ssh-rsa ...
+      # - GITOLITE_USER_PUBLIC_KEY_bob: ssh-rsa ...
+    read_only: true
+    volumes:
+    - ssh_host_keys:/etc/ssh/host_keys:rw
+    - gitolite_home:/var/lib/gitolite:rw
+    ports:
+    - '2200:2200'
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges]
+    # docker-compose >=2.2,<3
+    cpus: 0.8
+    # mem_limit: 256M
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pgrep -u git sshd
+      interval: 10s
+      timeout: 5s
+      retires: 5 
+
+# https://docs.docker.com/compose/compose-file/compose-file-v2/
