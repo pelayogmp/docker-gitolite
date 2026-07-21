@@ -1,5 +1,6 @@
 volumes:
   ssh_host_keys:
+  #gitolite_data:
   # gitolite_home volume must exists!: docker volume create gitolite_home
   gitolite_home:
     external: true

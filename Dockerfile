@@ -14,6 +14,8 @@ ARG OPENSSH_SERVER_PACKAGE_VERSION=1:9.2p1-2+deb12u7
 # https://salsa.debian.org/debian/tini/-/blob/debian/latest/debian/changelog?ref_type=heads
 ARG TINI_PACKAGE_VERSION=0.19.0-1+b3
 ARG USER=git
+# UID MUST BE 999 to match redmine image
+ARG UID=999
 ARG GITOLITE_HOME_PATH=/var/lib/gitolite
 ENV SSHD_HOST_KEYS_DIR=/etc/ssh/host_keys
 RUN apt-get update \
@@ -25,10 +27,10 @@ RUN apt-get update \
         tini \
     && rm -rf /var/lib/apt/lists/* \
     && rm /etc/ssh/ssh_host_*_key* \
-    && useradd --home-dir "$GITOLITE_HOME_PATH" --create-home "$USER" \
+    && userdel --force systemd-network || true && groupdel --force systemd-network || true && groupdel --force systemd-journal || true \
+    && groupdel --force "$USER" || true && groupadd --system --gid 999 "$USER" \
+    && userdel --force "$USER" || true && useradd  --system --home-dir "$GITOLITE_HOME_PATH" --create-home "$USER" --uid $UID --gid "$USER" \
     && getent passwd "$USER" \
-#    FIXME: What the heck is this??? it fails!
-#    && if grep --extended-regex --invert-match '^[a-z0-9_-]+:[\*!]:' /etc/shadow; then exit 21; fi \
     && mkdir "$SSHD_HOST_KEYS_DIR" \
     && chown -c "$USER" "$SSHD_HOST_KEYS_DIR"
 # TODO merge up
@@ -40,6 +42,7 @@ VOLUME $SSHD_HOST_KEYS_DIR
 COPY sshd_config /etc/ssh/sshd_config
 EXPOSE 2200/tcp
 
+ENV USER "$USER"
 ENV GITOLITE_INITIAL_ADMIN_NAME=admin
 COPY entrypoint.sh /
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
